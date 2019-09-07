@@ -21,7 +21,7 @@ import com.example.starweather.util.HttpUtil;
 import com.example.starweather.util.Utility;
 
 import org.jetbrains.annotations.NotNull;
-import org.litepal.LitePal;
+import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -134,10 +134,10 @@ public class ChooseAreaFragment extends Fragment {
         // 消除返回按钮( 已经到省级，无须返回查看)
         backButton.setVisibility(View.GONE);
 
-        provinceList = LitePal.findAll(Province.class);
+        provinceList = DataSupport.findAll(Province.class);
         if(provinceList.size() > 0){
             dataList.clear();
-            for(Province province : provinceList){
+            for (Province province : provinceList){
                 dataList.add(province.getProvinceName());
             }
             adapter.notifyDataSetChanged();
@@ -157,7 +157,7 @@ public class ChooseAreaFragment extends Fragment {
         titleText.setText(selectedProvince.getProvinceName());
         backButton.setVisibility(View.VISIBLE);  // 设置返回按钮消失
         // 查询数据库(City.class)中provincid 是当前id的城市
-        cityList = LitePal.where("provinceid = ?", String.valueOf(selectedProvince.getId())).find(City.class);
+        cityList = DataSupport.where("provinceid = ?", String.valueOf(selectedProvince.getId())).find(City.class);
         if (cityList.size() > 0) {
             // size大于0，说明数据库中查询到了指定城市
             dataList.clear();  //清空链表
@@ -181,7 +181,7 @@ public class ChooseAreaFragment extends Fragment {
         titleText.setText(selectedCity.getCityName());
         backButton.setVisibility(View.VISIBLE);  // 设置返回按钮消失
         // 查询数据库(County.class)中provincid 是当前id的城市
-        countyList = LitePal.where("cityid = ?", String.valueOf(selectedCity.getId())).find(County.class);
+        countyList = DataSupport.where("cityid = ?", String.valueOf(selectedCity.getId())).find(County.class);
         if (countyList.size() > 0) {
             // size大于0，说明数据库中查询到了指定城市
             dataList.clear();  //清空链表
@@ -207,18 +207,6 @@ public class ChooseAreaFragment extends Fragment {
 
         // 向服务器发送请求
         HttpUtil.sendOkHttpRequest(address, new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                // 回到主线程处理逻辑
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        closeProgressDialog();
-                        Toast.makeText(getContext(), "加载失败", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 String responseText = response.body().string();
@@ -249,6 +237,17 @@ public class ChooseAreaFragment extends Fragment {
                         }
                     });
                 }
+            }
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                // 回到主线程处理逻辑
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        closeProgressDialog();
+                        Toast.makeText(getContext(), "加载失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
     }
